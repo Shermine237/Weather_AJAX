@@ -6,7 +6,6 @@ let response = document.getElementById('response');
 //request options
 let baseUrl = "http://api.openweathermap.org/data/2.5/weather"
 let key = "3b8801a04a269716ee8c11e1f0b021e6";
-let xhr;
 
 //event listeners
 btn.addEventListener('click', handleClick, false);
@@ -14,38 +13,50 @@ btn.addEventListener('click', handleClick, false);
 
 function handleClick(e) // Execute when we clic to send button
 {
-    //grab city value
+    // Grab city value
     let city = cityField.value;
     //disable form
     cityField.disabled = true;
     btn.disabled = true;
-    //show spinner
+
+    // Show spinner
     updatePage(`<img src="images/spinner.gif" alt="spinner" id="spinner">`);
-    
-    //create xhr
-    xhr = new XMLHttpRequest();
-    xhr.open('GET', buildUrl(city));
-    xhr.onreadystatechange = handleResponse; // onreadyst... it is triggered when the state of readystate (Xmlhttprequest attribute) change and executes the associated function
-    xhr.send();
+
+    // Request
+    makeRequest(city).then(data => createSuccessHtml(data))
+                        .catch(error => createErrorHtml(error));
 }
 
 
-function handleResponse()   // Execute when we recieve any answer
+function makeRequest(city)
 {
-    // readyState have 5 states (0 to 4), read XMLHttpRequest to know more
-    if (xhr.readyState == 4) // if we recieve response from server
+    return new Promise((resolve, reject) => 
     {
-        if (xhr.status == 200)
+        // Create xhr
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', buildUrl(city));
+        // onreadystatechange... it is triggered when the state of readystate (Xmlhttprequest attribute) change and executes the associated function
+        xhr.onreadystatechange = () =>
+        // Execute when we recieve any answer (onreadystatechange change state)
         {
-            // if we recieve correct answer
-            createSuccessHtml(JSON.parse(xhr.responseText));
+            // readyState have 5 states (0 to 4), read XMLHttpRequest to know more
+            if (xhr.readyState == 4) // if we recieve response from server
+            {
+                if (xhr.status == 200)
+                {
+                    // if we recieve correct answer, we call 'resolve' parametter
+                    resolve(JSON.parse(xhr.responseText));
+                }
+                else
+                {
+                    // incorrect answer, we call 'reject' parameter
+                    reject(JSON.parse(xhr.responseText));
+                }
+            }
         }
-        else
-        {
-            // incorrect answer
-            createErrorHtml(JSON.parse(xhr.responseText))
-        }
-    }
+        
+        xhr.send();
+    });
 }
 
 
