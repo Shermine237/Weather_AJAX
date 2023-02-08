@@ -24,7 +24,8 @@ function handleClick(e) // Execute when we clic to send button
 
     // Request
     makeRequest(city).then(data => createSuccessHtml(data))
-                        .catch(error => createErrorHtml(error));
+                    .catch(error => createErrorHtml(error))
+                    .finally(() => resetForm());
 }
 
 
@@ -87,6 +88,14 @@ let createErrorHtml = (data) => // execute when we recieve incorrect answer read
 }
 
 
+function resetForm()
+{
+    //reset form
+    cityField.disabled = false;
+    btn.disabled = false;
+}
+
+
 /*Utilities*/
 let buildUrl = city => `${baseUrl}?units=metric&lang=fr&q=${city}&appid=${key}`;
 let updatePage = html => // to update html content page
@@ -95,7 +104,4 @@ let updatePage = html => // to update html content page
     response.innerHTML = '';
     //replace with htmlString
     response.insertAdjacentHTML( 'beforeend', html);
-    //reset form
-    cityField.disabled = false;
-    btn.disabled = false;
 }
