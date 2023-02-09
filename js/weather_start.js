@@ -11,7 +11,7 @@ let key = "3b8801a04a269716ee8c11e1f0b021e6";
 btn.addEventListener('click', handleClick, false);
 
 
-function handleClick(e) // Execute when we clic to send button
+async function handleClick(e) // Execute when we clic to send button    [adding async key]
 {
     // Grab city value
     let city = cityField.value;
@@ -23,21 +23,34 @@ function handleClick(e) // Execute when we clic to send button
     updatePage(`<img src="images/spinner.gif" alt="spinner" id="spinner">`);
 
     // Request
-    let req = fetch(buildUrl(city));
-    req.then(response =>
-        {
-            if(response.ok)
-            {
-                return response.json();
-            }
-            else
-            {
-                return response.json().then(obj => {throw obj});
-            }
-        })
-        .then(data => createSuccessHtml(data))
-        .catch(error => createErrorHtml(error))
-        .finally(() => resetForm());
+    try
+    {
+        let response = await fetch(buildUrl(city));
+        let data = await handleErrors(response);
+        await createSuccessHtml(data);
+    }
+    catch (error)
+    {
+        createErrorHtml(error);
+    }
+    finally
+    {
+        resetForm();
+    }
+}
+
+
+async function handleErrors(response)
+{
+    if(response.ok)
+    {
+        return response.json();
+    }
+    else
+    {
+        let error = await response.json();
+        throw error;
+    }
 }
 
 
