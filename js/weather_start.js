@@ -1,11 +1,13 @@
 //grab required elements
 let btn = document.getElementById('btnSend');
-let cityField = document.getElementById("city");
 let response = document.getElementById('response');
 
 //request options
 let baseUrl = "http://api.openweathermap.org/data/2.5/weather"
 let key = "3b8801a04a269716ee8c11e1f0b021e6";
+
+//initialize required variables
+let promises = [];
 
 //event listeners
 btn.addEventListener('click', handleClick, false);
@@ -13,19 +15,29 @@ btn.addEventListener('click', handleClick, false);
 
 function handleClick(e) // Execute when we clic to send button
 {
-    // Grab city value
-    let city = cityField.value;
-    //disable form
-    cityField.disabled = true;
+    //disable submit button
     btn.disabled = true;
-
-    // Show spinner
-    updatePage(`<img src="images/spinner.gif" alt="spinner" id="spinner">`);
-
-    // Request
-    makeRequest(city).then(data => createSuccessHtml(data))
-                    .catch(error => createErrorHtml(error))
-                    .finally(() => resetForm());
+    //loop around all 4 form fields
+    document.querySelectorAll('.form-field').forEach((element, index) =>
+    {
+        //grab city field
+        let cityField = document.getElementById(`city-${index}`);
+        //get city value
+        city = cityField.value;
+        //disable city field
+        cityField.disabled = true;
+        //show corresponding spinner;
+        updatePage(`<img src="images/spinner.gif" alt="spinner" id="spinner">`, index);
+        //make a request
+        let promise = makeRequest(city);
+        promises.push(promise);
+        promise.then(data => createSuccessHtml(data, index))
+                .catch(error => createErrorHtml(error, index))
+                .finally(() => resetCityField(cityField));
+    });
+    Promise.allSettled(promises)
+            .then(() => {btn.disabled = false})
+            .then(() => {promises = []});
 }
 
 
@@ -61,7 +73,7 @@ function makeRequest(city)
 }
 
 
-function createSuccessHtml(data)    // execute when we recieve correct answer readyState == 4 and status == 200
+function createSuccessHtml(data, index)    // execute when we recieve correct answer readyState == 4 and status == 200
 {
     let weather = data.weather[0];
     let html =
@@ -72,11 +84,11 @@ function createSuccessHtml(data)    // execute when we recieve correct answer re
         </p>
         <p>Température : ${data.main.temp.toFixed(1)} °C</p> 
     `
-    updatePage(html);
+    updatePage(html, index);
 }
 
 
-let createErrorHtml = (data) => // execute when we recieve incorrect answer readyState == 4 and status != 200
+let createErrorHtml = (data, index) => // execute when we recieve incorrect answer readyState == 4 and status != 200
 {
 
     let html = 
@@ -84,23 +96,23 @@ let createErrorHtml = (data) => // execute when we recieve incorrect answer read
         <h1>Une erreur s'est produite !</h1>
         <p>${data.message}</p>
     `
-    updatePage(html);
+    updatePage(html, index);
 }
 
 
-function resetForm()
+let resetCityField = (cityField) =>
 {
-    //reset form
     cityField.disabled = false;
-    btn.disabled = false;
+    cityField.value = '';
 }
 
 
 /*Utilities*/
 let buildUrl = city => `${baseUrl}?units=metric&lang=fr&q=${city}&appid=${key}`;
-let updatePage = html => // to update html content page
+let updatePage = (html, index) => // to update html content page
 {
     //empty response container
+    let response = document.getElementById(`response-${index}`)
     response.innerHTML = '';
     //replace with htmlString
     response.insertAdjacentHTML( 'beforeend', html);
