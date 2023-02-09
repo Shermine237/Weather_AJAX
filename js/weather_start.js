@@ -22,42 +22,22 @@ function handleClick(e) // Execute when we clic to send button
     // Show spinner
     updatePage(`<img src="images/spinner.gif" alt="spinner" id="spinner">`);
 
-    // Request
-    makeRequest(city).then(data => createSuccessHtml(data))
-                    .catch(error => createErrorHtml(error))
-                    .finally(() => resetForm());
-}
-
-
-function makeRequest(city)
-{
-    return new Promise((resolve, reject) => 
-    {
-        // Create xhr
-        let xhr = new XMLHttpRequest();
-        xhr.open('GET', buildUrl(city));
-        // onreadystatechange... it is triggered when the state of readystate (Xmlhttprequest attribute) change and executes the associated function
-        xhr.onreadystatechange = () =>
-        // Execute when we recieve any answer (onreadystatechange change state)
+    // Make request
+    let req = fetch(buildUrl(city));
+    req.then(response =>
         {
-            // readyState have 5 states (0 to 4), read XMLHttpRequest to know more
-            if (xhr.readyState == 4) // if we recieve response from server
+            if(response.ok)
             {
-                if (xhr.status == 200)
-                {
-                    // if we recieve correct answer, we call 'resolve' parametter
-                    resolve(JSON.parse(xhr.responseText));
-                }
-                else
-                {
-                    // incorrect answer, we call 'reject' parameter
-                    reject(JSON.parse(xhr.responseText));
-                }
+                return response.json()
             }
-        }
-        
-        xhr.send();
-    });
+            else
+            {
+                return response.json().then(obj => {throw obj})
+            }
+        })
+        .then(data => createSuccessHtml(data))
+        .catch(error => createErrorHtml(error))
+        .finally(() => resetForm());
 }
 
 
